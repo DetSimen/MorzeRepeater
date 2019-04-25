@@ -5,26 +5,20 @@
 */
 
 #include "Arduino.h"
-#include "Generics.h"
 #include "MorzeTable.h"
 #include "TimerList.h"
 #include "Messages.h"
-//#include "DigitalDevice.h"
 
 
-static uint8_t TXPin = 10;
-
-
+static uint8_t TXPin = 10;  // пин передаччика
 
 extern TTimerList TimerList;	// списой таймеров (до 10) паумолчанью
 
 TMessageList MessageList(12);  // очереть на 12 сапщений
 
-
 static const int msg_ReadSerial = 0x100;   // сообщение "Читать Сериал"
 static const int msg_SendChar = 0x101;		// сообщение "Передать символ (букву)"
 static const int msg_SendNextBit = 0x102;	// сообщение "Передать следующий бит в букве"
-
 
 static const uint32_t DOT_TIME = 75;  // основное время, длительность точки 75 мс, остальные производные
 static const uint32_t DASH_TIME = 3 * DOT_TIME; // длительность тире
@@ -34,20 +28,13 @@ static const uint16_t SERIAL_TIMEOUT = 2000; // если в течение 2000 
 
 static const uint8_t MAX_STRING_LENGTH = 128; // макс длина передаваемой строки
 
-
 enum class enumTXState : bool { Pause = false, Bit = true };  
 
 enumTXState TXState = enumTXState::Pause;  // что передаем в данный момент: или бит (точка/тире) или паузу
 
-
-//TDigitalDevice KeyDevice(10, TActiveLevel::High);  // сопсно, ключ или пищялка на 10м пине.  У мня просто светлодиот
-
-
 THandle hTXTimer = INVALID_HANDLE;       // таймер передаччика
 THandle hSerialTimer = INVALID_HANDLE;	// таймер таймаута приема из Serial
 THandle hRepeatTimer = INVALID_HANDLE;	// таймер повтора фразы
-
-
 
 uint8_t TXCurrentMask = 0;   // маска текущего символа
 uint8_t TXCurrentCode = 0;   // битовый код Морзе текущего символа
@@ -59,10 +46,9 @@ String StringToTransmit;            // строка, которую будем �
 uint16_t TransmitCharIndex = 0;		// индекс текущего символа, в этой строке
 
 
-void TXOnOff(const bool On) {
+void TXOnOff(const bool On) {  // передаччик вкл/выкл
 	digitalWrite(TXPin, On);
 }
-
 
 void tmrTXTimer(void) {     // здесь кончился таймер передачи бита/паузы
 	SendMessage(msg_TimerEnd, hTXTimer);
@@ -79,8 +65,6 @@ void tmrRepeat(void) {     // таймер повтора кончился, на
 	TXStopped = false;          
 	TimerList.Stop(hRepeatTimer);
 }
-
-
 
 void sendBit(const bool aBit) {  // передать один бит (точку == false или тире == true)
 
@@ -125,12 +109,8 @@ void sendPause(const uint8_t kf = 1) {  // передаем паузу длин�
 	TransmitCharIndex = 0;  
 }
 
-
-
 void loop()
 {
-	
-
 	if (Serial.available()) {        // если в сериал чота припрыгало
 		SendMessage(msg_ReadSerial);	// пошлем команду прочесть сериал
 		TXStopped = true;				// передачу остановим
@@ -210,11 +190,7 @@ void loop()
 		}
 		break;
 	}
-
-	case msg_DeviceStateChanged:  // заглушка, сюда светлодиот сапщенья шлёт, что он вкл/выкл
-		break;
-	default:
-		Serial << "Unknown message code: 0x"; Serial.println(msg.Message, HEX);
+		Serial.print("Unknown message code: 0x"); Serial.println(msg.Message, HEX);
 		break;
 	}
 
